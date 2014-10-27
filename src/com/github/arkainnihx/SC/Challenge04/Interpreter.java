@@ -22,7 +22,7 @@ public class Interpreter {
 			new FilenameFilter() {
 				public boolean accept(File dir, String name) {
 					String lowercaseName = name.toLowerCase();
-					if (lowercaseName.endsWith(".bb")) {
+					if (lowercaseName.endsWith(".bones")) {
 						return true;
 					} else {
 						return false;
@@ -51,19 +51,33 @@ public class Interpreter {
 	}
 	
 	public static void interpret(String programLine) {
-		Keyword command;
+		Keyword command = null;
+		String identifier = "";
 		Pattern validLine = Pattern.compile("\\s*(?:(clear|incr|decr)\\s+(\\w+)|(while)\\s+(\\w+)\\s+not\\s+0\\s+do|(end));");
 		Matcher line = validLine.matcher(programLine);
 		boolean valid = line.matches();
 		if (valid) {
 			//System.out.println("Valid line.");
 			if (line.group(1) != null) {
-					
+				for (Keyword keyword : Keyword.values()) {
+					if (keyword.toString().equalsIgnoreCase(line.group(1))) {
+						command = keyword;
+						identifier = line.group(2);
+					}
 				}
+			} else if (line.group(3) != null) {
+				command = Keyword.WHILE;
+				identifier = line.group(4);
+			} else {
+				command = Keyword.END;
 			}
+			execute(command, identifier);
  		} else {
 			System.err.println("Invalid line.");
 		}
 	}
 	
+	public static void execute(Keyword command, String variable) {
+		
+	}
 }
