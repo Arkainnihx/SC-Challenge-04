@@ -1,5 +1,5 @@
 package com.github.arkainnihx.SC.Challenge04;
 
-public enum Keywords {
+public enum Keyword {
 	CLEAR, INCR, DECR, WHILE, END
 }

@@ -6,27 +6,30 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.Stack;
 import java.util.regex.*;
 
 public class Interpreter {
 	static String fileName;
 	static String[] program;
 	static HashMap<String, Integer> variables = new HashMap<String, Integer>();
+	static Stack<Integer> loopStack = new Stack<Integer>();
 	
 	public static void main(String[] args) throws IOException {
 		File directory = new File(".");
 		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
 		String[] fileList = directory.list(
-				new FilenameFilter() {
-					public boolean accept(File dir, String name) {
-						String lowercaseName = name.toLowerCase();
-						if (lowercaseName.endsWith(".bb")) {
-							return true;
-						} else {
-							return false;
-						}
+			new FilenameFilter() {
+				public boolean accept(File dir, String name) {
+					String lowercaseName = name.toLowerCase();
+					if (lowercaseName.endsWith(".bb")) {
+						return true;
+					} else {
+						return false;
 					}
-				} );
+				}
+			}
+		);
 		
 		System.out.println("Available programs to run:");
 		System.out.println();
@@ -39,18 +42,26 @@ public class Interpreter {
 		program = new FileInput(fileName).getFileContents();
 		for (String programLine : program) {
 			interpret(programLine);
-			System.out.println(programLine);
+			if (variables.size() > 0) {
+				for (String key : variables.keySet()) {
+					System.out.println(key + " = " + variables.get(key));	
+				}		
+			}
 		}
 	}
 	
 	public static void interpret(String programLine) {
-		Pattern validLine = Pattern.compile("\\s*((clear|incr|decr)\\s+(\\w+)|(while\\s+(\\w+)\\s+not\\s+0\\s+do)|(end));");
+		Keyword command;
+		Pattern validLine = Pattern.compile("\\s*(?:(clear|incr|decr)\\s+(\\w+)|(while)\\s+(\\w+)\\s+not\\s+0\\s+do|(end));");
 		Matcher line = validLine.matcher(programLine);
 		boolean valid = line.matches();
 		if (valid) {
 			//System.out.println("Valid line.");
-			
-		} else {
+			if (line.group(1) != null) {
+					
+				}
+			}
+ 		} else {
 			System.err.println("Invalid line.");
 		}
 	}
