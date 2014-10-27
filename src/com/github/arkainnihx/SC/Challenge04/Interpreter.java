@@ -10,10 +10,12 @@ import java.util.Stack;
 import java.util.regex.*;
 
 public class Interpreter {
+	static int programCounter = 0;
 	static String fileName;
 	static String[] program;
 	static HashMap<String, Integer> variables = new HashMap<String, Integer>();
 	static Stack<Integer> loopStack = new Stack<Integer>();
+	static boolean quit = false;
 	
 	public static void main(String[] args) throws IOException {
 		File directory = new File(".");
@@ -30,24 +32,30 @@ public class Interpreter {
 				}
 			}
 		);
-		
-		System.out.println("Available programs to run:");
-		System.out.println();
-		for (String element : fileList) {
-			System.out.println(element);
-		}
-		System.out.println();
-		System.out.println("What program would you like to run?");
-		fileName = userInput.readLine();
-		program = new FileInput(fileName).getFileContents();
-		for (String programLine : program) {
-			interpret(programLine);
-			if (variables.size() > 0) {
-				for (String key : variables.keySet()) {
-					System.out.println(key + " = " + variables.get(key));	
-				}		
+		do {
+			System.out.println("Available programs to run:");
+			System.out.println();
+			for (String element : fileList) {
+				System.out.println(element);
 			}
-		}
+			System.out.println();
+			System.out.println("What program would you like to run?");
+			fileName = userInput.readLine();
+			program = new FileInput(fileName).getFileContents();
+			for (String programLine : program) {
+				interpret(programLine);
+				if (variables.size() > 0) {
+					for (String key : variables.keySet()) {
+						System.out.println(key + " = " + variables.get(key));
+					}
+				}
+			}
+			System.out.println();
+			System.out.println("Would you like to run another program? (Y/N)");
+			if (userInput.readLine().equalsIgnoreCase("n")) {
+				quit = true;
+			}
+		} while (quit == false);
 	}
 	
 	public static void interpret(String programLine) {
@@ -78,6 +86,31 @@ public class Interpreter {
 	}
 	
 	public static void execute(Keyword command, String variable) {
-		
+		switch (command) {
+		case CLEAR :
+				variables.put(variable, 0);
+			break;
+		case INCR :
+			if (variables.containsKey(variable)) {
+				variables.put(variable, variables.get(variable) + 1);
+			} else {
+				variables.put(variable, 1);
+			}
+			break;
+		case DECR :
+			if (variables.containsKey(variable)) {
+				variables.put(variable, variables.get(variable) - 1);
+			} else {
+				System.err.println("Invalid operation. Negative values aren't supported.");
+				System.exit(0);
+			}
+			break;
+		case WHILE :
+			
+			break;
+		case END :
+			
+			break;
+		}
 	}
 }
