@@ -2,26 +2,24 @@ package com.github.arkainnihx.SC.Challenge04;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.Stack;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Interpreter {
-	static int programCounter = 0;
-	static String fileName;
-	static String[] program;
-	static HashMap<String, Integer> variables = new HashMap<String, Integer>();
-	static Stack<Integer> loopStack = new Stack<Integer>();
-	static Stack<Integer> endStack = new Stack<Integer>();
-	static Keyword currentCommand = null;
-	static String currentIdentifier = "";
+	static int programCounter, superCounter = 0;
 	static boolean quit = false;
 	static boolean validFile = false;
+	static String fileName, currentIdentifier = "";
+	static String[] program;
+	static HashMap<String, Integer> variables = new HashMap<String, Integer>();
+	static Stack<Integer> loopStack, endStack = new Stack<Integer>();
+	static Keyword currentCommand = null;
 	
 	public static void main(String[] args) throws IOException {
 		File directory = new File("BB-Programs/");
@@ -38,16 +36,19 @@ public class Interpreter {
 			}
 		);
 		do {
+			validFile = false;
+			program = null;
 			System.out.println("Available programs to run:");
 			System.out.println();
 			for (String element : fileList) {
 				System.out.println(element);
 			}
 			do {
+				fileName = directory.toString() + "/";
 				try {
 					System.out.println();
 					System.out.println("What program would you like to run?");
-					fileName = directory.toString() + "/" + getUserInput();
+					fileName += getUserInput();
 					if (!fileName.contains(".bones"))
 						fileName += ".bones";
 					program = new FileInput(fileName).getFileContents();
@@ -69,6 +70,7 @@ public class Interpreter {
 	}
 	
 	public static int runProgram() {
+		superCounter = 0;
 		programCounter = 0;
 		variables = new HashMap<String, Integer>();
 		loopStack = new Stack<Integer>();
@@ -77,11 +79,11 @@ public class Interpreter {
 		currentIdentifier = "";
 		do {
 			try {
-				System.out.print(programCounter + ": ");
-				System.out.print(program[programCounter] + "      ");
+				System.out.print((superCounter + 1) + " - Line " + (programCounter + 1) + ": ");
 				currentCommand = interpretCommand(program[programCounter]);
 				currentIdentifier = interpretIdentifier(program[programCounter]);
 				execute(currentCommand, currentIdentifier);
+				superCounter++;
 			} catch (BareBonesException e) {
 				System.out.println("Exiting program.");
 				return 0;
