@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.Stack;
 import java.util.regex.*;
@@ -15,6 +16,9 @@ public class Interpreter {
 	static String[] program;
 	static HashMap<String, Integer> variables = new HashMap<String, Integer>();
 	static Stack<Integer> loopStack = new Stack<Integer>();
+	static Stack<Integer> endStack = new Stack<Integer>();
+	static Keyword currentCommand = null;
+	static String currentIdentifier = "";
 	static boolean quit = false;
 	
 	public static void main(String[] args) throws IOException {
@@ -41,26 +45,52 @@ public class Interpreter {
 			System.out.println();
 			System.out.println("What program would you like to run?");
 			fileName = userInput.readLine();
+			if(!fileName.contains(".bones")) fileName += ".bones";
 			program = new FileInput(fileName).getFileContents();
-			for (String programLine : program) {
-				interpret(programLine);
-				if (variables.size() > 0) {
-					for (String key : variables.keySet()) {
-						System.out.println(key + " = " + variables.get(key));
-					}
-				}
-			}
+			runProgram();
 			System.out.println();
 			System.out.println("Would you like to run another program? (Y/N)");
-			if (userInput.readLine().equalsIgnoreCase("n")) {
-				quit = true;
-			}
+			if (userInput.readLine().equalsIgnoreCase("n"))	quit = true;
 		} while (quit == false);
 	}
 	
-	public static void interpret(String programLine) {
+	public static int runProgram() {
+		programCounter = 0;
+		variables = new HashMap<String, Integer>();
+		loopStack = new Stack<Integer>();
+		endStack = new Stack<Integer>();
+		currentCommand = null;
+		currentIdentifier = "";
+		do {
+			try {
+				System.out.print(programCounter + ": ");
+				System.out.print(program[programCounter] + "      ");
+				currentCommand = interpretCommand(program[programCounter]);
+				currentIdentifier = interpretIdentifier(program[programCounter]);
+				execute(currentCommand, currentIdentifier);
+			} catch (BareBonesException e) {
+				System.out.println("Exiting program.");
+				return 0;
+			}
+			printVariables();
+		} while (programCounter < program.length);
+		System.out.println();
+		System.out.println("Program complete:");
+			printVariables();
+		return 0;
+	}
+	
+	public static void printVariables() {
+		for (int varCount = 0; varCount < variables.size() - 1; varCount++) {
+			System.out.print(variables.keySet().toArray()[varCount] + " = " + variables.get(variables.keySet().toArray()[varCount]) + ", ");
+		}
+		System.out.println(variables.keySet().toArray()[variables.size() - 1] + " = " + variables.get(variables.keySet().toArray()[variables.size() - 1]));
+	}
+	
+	public static HashMap<Keyword, String> interpret(String programLine) throws BareBonesException {
 		Keyword command = null;
 		String identifier = "";
+		HashMap<Keyword, String> parsedLine = new HashMap<Keyword, String>();
 		Pattern validLine = Pattern.compile("\\s*(?:(clear|incr|decr)\\s+(\\w+)|(while)\\s+(\\w+)\\s+not\\s+0\\s+do|(end));");
 		Matcher line = validLine.matcher(programLine);
 		boolean valid = line.matches();
@@ -79,38 +109,86 @@ public class Interpreter {
 			} else {
 				command = Keyword.END;
 			}
-			execute(command, identifier);
+			parsedLine.put(command, identifier);
  		} else {
-			System.err.println("Invalid line.");
+			System.out.println("Invalid line.");
+			throw new BareBonesException();
+		}
+		return parsedLine;
+	}
+	
+	public static Keyword interpretCommand(String programLine) throws BareBonesException {
+		return (Keyword) interpret(programLine).keySet().toArray()[0];
+	}
+	
+	public static String interpretIdentifier(String programLine) throws BareBonesException {
+		return  (String) interpret(programLine).values().toArray()[0];
+	}
+	
+	public static void execute(Keyword command, String identifier) throws BareBonesException {
+		switch (command) {
+		case CLEAR :
+				variables.put(identifier, 0);
+				programCounter++;
+			break;
+		case INCR :
+			if (variables.containsKey(identifier)) {
+				variables.put(identifier, variables.get(identifier) + 1);
+			} else {
+				variables.put(identifier, 1);
+			}
+			programCounter++;
+			break;
+		case DECR :
+			if (variables.containsKey(identifier)) {
+				variables.put(identifier, variables.get(identifier) - 1);
+				if (variables.get(identifier) < 0) {
+					System.out.println("Invalid operation. Negative values aren't supported.");
+					throw new BareBonesException();
+				}
+			} else {
+				System.out.println("Invalid operation. Negative values aren't supported.");
+				throw new BareBonesException();
+			}
+				programCounter++;
+			break;
+		case WHILE :
+			try {
+				if (loopStack.peek() != programCounter) {
+					loopStack.push(programCounter);
+					endStack.push(endSearch(loopStack.peek()));
+				}
+			} catch (EmptyStackException e) {
+				loopStack.push(programCounter);
+				endStack.push(endSearch(loopStack.peek()));
+			}
+			if (variables.get(identifier) == 0) {
+				loopStack.pop();
+				programCounter = endStack.pop() + 1;
+			} else {
+				programCounter++;
+			}
+			break;
+		case END :
+			programCounter = loopStack.peek();
+			break;
 		}
 	}
 	
-	public static void execute(Keyword command, String variable) {
-		switch (command) {
-		case CLEAR :
-				variables.put(variable, 0);
-			break;
-		case INCR :
-			if (variables.containsKey(variable)) {
-				variables.put(variable, variables.get(variable) + 1);
-			} else {
-				variables.put(variable, 1);
+	public static int endSearch(int whilePointer) throws BareBonesException {
+		int lineCounter = whilePointer + 1;
+		int loopDepth = 0;
+		do {
+			if (loopDepth == 0 && interpretCommand(program[lineCounter]) == Keyword.END) {
+				return lineCounter;
+			} else if (interpretCommand(program[lineCounter]) == Keyword.WHILE) {
+				loopDepth++;
+			} else if (loopDepth > 0 && interpretCommand(program[lineCounter]) == Keyword.END) {
+				loopDepth--;
 			}
-			break;
-		case DECR :
-			if (variables.containsKey(variable)) {
-				variables.put(variable, variables.get(variable) - 1);
-			} else {
-				System.err.println("Invalid operation. Negative values aren't supported.");
-				System.exit(0);
-			}
-			break;
-		case WHILE :
-			
-			break;
-		case END :
-			
-			break;
-		}
-	}
+			lineCounter++;
+		} while (lineCounter < program.length);
+		System.out.println("Missing end statement.");
+		throw new BareBonesException();
+	} 
 }
