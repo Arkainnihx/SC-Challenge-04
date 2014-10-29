@@ -22,7 +22,7 @@ public class Interpreter {
 	static boolean quit = false;
 	
 	public static void main(String[] args) throws IOException {
-		File directory = new File(".");
+		File directory = new File("BB-Programs/");
 		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
 		String[] fileList = directory.list(
 			new FilenameFilter() {
@@ -44,7 +44,7 @@ public class Interpreter {
 			}
 			System.out.println();
 			System.out.println("What program would you like to run?");
-			fileName = userInput.readLine();
+			fileName = directory.toString() + "/" + userInput.readLine();
 			if(!fileName.contains(".bones")) fileName += ".bones";
 			program = new FileInput(fileName).getFileContents();
 			runProgram();

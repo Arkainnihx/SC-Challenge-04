@@ -1,11 +1,11 @@
 clear add1;
+incr add1;
+incr add1;
+incr add1;
 clear add2;
+incr add2;
+incr add2;
 clear temp;
-incr add1;
-incr add1;
-incr add1;
-incr add2;
-incr add2;
 while add2 not 0 do;
 	incr add1;
 	incr temp;
