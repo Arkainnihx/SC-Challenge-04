@@ -2,6 +2,7 @@ package com.github.arkainnihx.SC.Challenge04;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,10 +21,10 @@ public class Interpreter {
 	static Keyword currentCommand = null;
 	static String currentIdentifier = "";
 	static boolean quit = false;
+	static boolean validFile = false;
 	
 	public static void main(String[] args) throws IOException {
 		File directory = new File("BB-Programs/");
-		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
 		String[] fileList = directory.list(
 			new FilenameFilter() {
 				public boolean accept(File dir, String name) {
@@ -42,16 +43,29 @@ public class Interpreter {
 			for (String element : fileList) {
 				System.out.println(element);
 			}
-			System.out.println();
-			System.out.println("What program would you like to run?");
-			fileName = directory.toString() + "/" + userInput.readLine();
-			if(!fileName.contains(".bones")) fileName += ".bones";
-			program = new FileInput(fileName).getFileContents();
+			do {
+				try {
+					System.out.println();
+					System.out.println("What program would you like to run?");
+					fileName = directory.toString() + "/" + getUserInput();
+					if (!fileName.contains(".bones"))
+						fileName += ".bones";
+					program = new FileInput(fileName).getFileContents();
+					validFile = true;
+				} catch (IOException e) {
+					System.out.println("Invalid input. No file of that name.");
+				}
+			} while (!validFile);
 			runProgram();
 			System.out.println();
 			System.out.println("Would you like to run another program? (Y/N)");
-			if (userInput.readLine().equalsIgnoreCase("n"))	quit = true;
-		} while (quit == false);
+			if (getUserInput().equalsIgnoreCase("n")) quit = true;
+		} while (!quit);
+	}
+	
+	public static String getUserInput() throws IOException {
+		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+				return userInput.readLine();
 	}
 	
 	public static int runProgram() {

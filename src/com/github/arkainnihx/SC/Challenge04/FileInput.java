@@ -11,27 +11,17 @@ public class FileInput {
 	BufferedReader myFileParser;
 	FileReader myFileReader;
 	
-	public FileInput(String filePath) {
+	public FileInput(String filePath) throws FileNotFoundException {
 		this.filePath = filePath;
-		try {
 			myFileReader = new FileReader(this.filePath);
 			myFileParser = new BufferedReader(myFileReader);
-		} catch (FileNotFoundException e) {
-			System.err.println("File not found.");
-			e.printStackTrace();
-		}
 	}
 	
-	public String[] getFileContents() {
+	public String[] getFileContents() throws IOException {
 		ArrayList<String> fileContents = new ArrayList<String>();
-		try {
 			while (myFileParser.ready()) {
 			fileContents.add(myFileParser.readLine());
 			}
 			return fileContents.toArray(new String[fileContents.size()]);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
 	}
 }
