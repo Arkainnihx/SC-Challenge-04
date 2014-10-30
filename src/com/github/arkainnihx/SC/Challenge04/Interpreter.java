@@ -27,7 +27,7 @@ public class Interpreter {
 			new FilenameFilter() {
 				public boolean accept(File dir, String name) {
 					String lowercaseName = name.toLowerCase();
-					if (lowercaseName.endsWith(".bones")) {
+					if (lowercaseName.endsWith(".bb")) {
 						return true;
 					} else {
 						return false;
@@ -49,8 +49,8 @@ public class Interpreter {
 					System.out.println();
 					System.out.println("What program would you like to run?");
 					fileName += getUserInput();
-					if (!fileName.contains(".bones"))
-						fileName += ".bones";
+					if (!fileName.contains(".bb"))
+						fileName += ".bb";
 					program = new FileInput(fileName).getFileContents();
 					validFile = true;
 				} catch (IOException e) {
@@ -69,7 +69,7 @@ public class Interpreter {
 				return userInput.readLine();
 	}
 	
-	public static int runProgram() {
+	public static void runProgram() {
 		superCounter = 0;
 		programCounter = 0;
 		variables = new HashMap<String, Integer>();
@@ -86,14 +86,13 @@ public class Interpreter {
 				superCounter++;
 			} catch (BareBonesException e) {
 				System.out.println("Exiting program.");
-				return 0;
+				return;
 			}
 			printVariables();
 		} while (programCounter < program.length);
 		System.out.println();
 		System.out.println("Program complete:");
 			printVariables();
-		return 0;
 	}
 	
 	public static void printVariables() {
